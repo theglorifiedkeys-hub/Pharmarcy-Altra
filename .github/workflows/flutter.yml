@@ -14,7 +14,17 @@ jobs:
           flutter-version: '3.32.8'
           cache: true
       - run: flutter pub get
-      - run: flutter analyze --no-fatal-infos
+      - name: Analyze Flutter
+        run: |
+          set +e
+          flutter analyze --no-fatal-infos 2>&1 | tee /tmp/altra-analyze.log
+          result=${PIPESTATUS[0]}
+          if (( result != 0 )); then
+            grep -E 'error •|warning •' /tmp/altra-analyze.log | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+          fi
+          exit "$result"
       - run: flutter test
       - run: bash tool/prepare_android.sh
       - run: flutter build apk --debug
