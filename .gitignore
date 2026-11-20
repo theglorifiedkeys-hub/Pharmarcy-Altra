@@ -1,4 +1,9 @@
-node_modules/
-dist/
+.dart_tool/
+.flutter-plugins*
+build/
+.idea/
+*.iml
+android/local.properties
 
 artifacts/
+android/
