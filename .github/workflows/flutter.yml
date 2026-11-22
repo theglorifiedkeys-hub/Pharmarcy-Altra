@@ -1,5 +1,7 @@
 name: Flutter verification and APK
 on: [push, pull_request]
+permissions:
+  contents: write
 jobs:
   flutter:
     runs-on: ubuntu-latest
@@ -27,9 +29,29 @@ jobs:
           exit "$result"
       - run: flutter test
       - run: bash tool/prepare_android.sh
-      - run: flutter build apk --debug
+      - name: Build debug APK
+        run: flutter build apk --debug
+      - name: Build release APK
+        continue-on-error: true
+        run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
           name: Altra-Pharmacy-Flutter-APK
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          path: build/app/outputs/flutter-apk/app-*.apk
           if-no-files-found: error
+      - name: Publish installable APK
+        if: github.event_name == 'push'
+        continue-on-error: true
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: flutter-latest
+          name: Altra Pharmacy · latest Flutter APK
+          body: |
+            Installable Flutter build of Altra Pharmacy (Tanzania).
+
+            Recommended: `app-release.apk`. If the release build was skipped,
+            `app-debug.apk` installs the same app.
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/flutter-apk/app-debug.apk
+          fail_on_unmatched_files: false
